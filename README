@@ -1,0 +1,83 @@
+IdPmonitor
+==========
+
+A script that verifies that your IdP is up and running.
+To be able to really check this it has to do a complete authentication.
+Presently only login with username and password is supported.
+
+In order to be able to do the login without a user present some configuration
+is needed.
+
+interaction
+...........
+
+The really hard part is the **interaction** part. This is where the
+the script is told how to fake that there is a human behind the keyboard.
+
+It consists of a lists of dictionaries with the keys: **matches**,
+**page-type** and **control**.
+
+The idea is to use **matches** to **activated** a corresponding set of
+**controls**.
+
+matches
+-------
+
+**matches** is used to identify a page or a form within a page.
+There are four different things that can be used to match the page:
+
+* url : The action url
+* title : The title of the page, substring matching is used.
+* content: Something in the page, again substring matching is used, and finally
+
+Normally the front-end will pick out the necessary information by
+using a users interaction with the entity. If you are running this
+directly from the prompt then you have to provide the information.
+You can build this information by using the fact that the script will
+dump any page it doesn't know what to do with.
+
+An example::
+
+
+    {
+        "matches": {
+            "url": "http://localhost:8088/login",
+            "title": 'IDP test login'
+        },
+        "page-type": "login",
+        "control": {
+            "type": "form",
+            "set": {"login": "roland", "password": "dianakra"}
+        }
+    }
+
+The action here is to set the control *login* to 'roland' and the control
+*password* to 'dianakra' and then post the form.
+
+Or if the server uses HTTP Post binding::
+
+    {
+        "matches": {
+            "url": "http://localhost:8088/sso/redirect",
+            "title": "SAML 2.0 POST"
+        },
+        "control": {
+            "type": "response",
+            "pick": {"form": {"action":"http://localhost:8088/acs"}}
+        }
+    },
+
+Here the action is just to post the form, no information is added to the form.
+
+page-type
+---------
+
+**page-type** is used to mark the page as *login* or *user-consent*.
+This is used in specific conversation where one or the other is expected
+in certain circumstances.
+
+control
+-------
+
+**control** specifies what the script should enter where and which button
+to press.
