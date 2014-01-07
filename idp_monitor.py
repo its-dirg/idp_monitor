@@ -144,7 +144,7 @@ class Check(object):
                 raise
 
 
-def check(client, conf, entity_id, supress_output=False):
+def check(client, conf, entity_id, supress_output=False, login_time=False):
     check = Check(client, conf.INTERACTION)
 
     _client = check.client
@@ -177,13 +177,17 @@ def check(client, conf, entity_id, supress_output=False):
             print >> sys.stderr, resp.response.status
         else:
             if not supress_output:
-                print "OK %s" % check.login_time
+                if login_time:
+                    print "OK %s" % check.login_time
+                else:
+                    print "OK"
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', dest='conf_path')
     parser.add_argument('-e', dest='entity_id')
+    parser.add_argument('-t', dest='login_split_time', action='store_true')
     parser.add_argument('-n', dest='count', default="1")
     parser.add_argument(dest="config")
     args = parser.parse_args()
@@ -211,7 +215,7 @@ def main():
         assert client.metadata[entity_id]
 
     if args.count == "1":
-        check(client, conf, entity_id)
+        check(client, conf, entity_id, login_time=args.login_split_time)
     else:
         for i in range(0, int(args.count)):
             check(client, conf, entity_id, supress_output=True)
