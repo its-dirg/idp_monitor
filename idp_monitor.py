@@ -1,15 +1,18 @@
 #!/usr/bin/env python
 
+import argparse
 import cookielib
 import importlib
-from urlparse import parse_qs
-import argparse
-from saml2.client import Saml2Client
 import sys
+import time
+
+from urlparse import parse_qs
+
+from saml2.client import Saml2Client
 from saml2.config import SPConfig
 from saml2.s_utils import rndstr
 from saml2.samlp import STATUS_SUCCESS
-import time
+
 from interaction import Interaction
 from interaction import InteractionNeeded
 from interaction import Action
@@ -25,6 +28,7 @@ class Check(object):
                      "service": cookielib.CookieJar()}
         self.interaction = Interaction(self.client, interaction_spec)
         self.features = None
+        self.login_time = 0
 
     def my_endpoints(self):
         """
@@ -111,10 +115,21 @@ class Check(object):
             else:
                 _last_action = _spec
 
+            try:
+                page_type = _spec["page-type"]
+            except KeyError:
+                page_type = ""
+            else:
+                if page_type == "login":
+                    login_start = time.time()
+
             _op = Action(_spec["control"])
 
             try:
                 _response = _op(self.client, self, url, _response)
+                if page_type == "login":
+                    self.login_time = time.time() - login_start
+
                 if isinstance(_response, dict):
                     return _response
                 content = _response.text
@@ -134,9 +149,13 @@ def check(client, conf, entity_id, supress_output=False):
 
     _client = check.client
     relay_state = rndstr()
-    _id, htargs = check.client.prepare_for_authenticate(entity_id,
-                                                        relay_state=relay_state)
+    _id, htargs = _client.prepare_for_authenticate(entity_id,
+                                                   relay_state=relay_state)
     resp = _client.send(htargs["headers"][0][1], "GET")
+
+    if resp.status_code >= 400:
+        print "Error"
+        print >> sys.stderr, resp.text
 
     # resp should be dictionary with keys RelayState, SAMLResponse and endpoint
     try:
@@ -158,7 +177,7 @@ def check(client, conf, entity_id, supress_output=False):
             print >> sys.stderr, resp.response.status
         else:
             if not supress_output:
-                print "OK"
+                print "OK %s" % check.login_time
 
 
 def main():
@@ -189,6 +208,7 @@ def main():
             entity_id = args.entity_id
     else:
         entity_id = args.entity_id
+        assert client.metadata[entity_id]
 
     if args.count == "1":
         check(client, conf, entity_id)
