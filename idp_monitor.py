@@ -215,8 +215,8 @@ def main():
     parser.add_argument('-t', dest='login_split_time', action='store_true')
     parser.add_argument('-n', dest='count', default="1")
     parser.add_argument('-N', dest='nagios', action='store_true')
-    parser.add_argument('-S', dest='svc')
-    parser.add_argument('-H', dest='host')
+    parser.add_argument('-S', dest='svc', help="Service description for Nagios")
+    parser.add_argument('-H', dest='host', help="Service host for Nagios")
     parser.add_argument(dest="config")
     args = parser.parse_args()
 
