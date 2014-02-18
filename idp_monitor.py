@@ -144,7 +144,15 @@ class Check(object):
                 raise
 
 
-def check(client, conf, entity_id, supress_output=False, login_time=False):
+NAGIOS_LINE = "[{time}] PROCESS_SERVICE_CHECK_RESULT;{host};{svc};{code};{" \
+              "output}"
+
+RETURN_CODE = {"OK": 0, "WARNING": 1, "CRITICAL": 2, "UNKNOWN": 3}
+
+
+def check(client, conf, entity_id, suppress_output=False, login_time=False,
+          nagios=False, nagios_args=None):
+
     check = Check(client, conf.INTERACTION)
 
     _client = check.client
@@ -173,10 +181,27 @@ def check(client, conf, entity_id, supress_output=False, login_time=False):
             assert resp.response.status.status_code.value == STATUS_SUCCESS
         except AssertionError:
             # Got an error response
-            print "Error"
-            print >> sys.stderr, resp.response.status
+            if nagios:
+                _kwargs = {
+                    "time": time.time(),
+                    "code": RETURN_CODE["CRITICAL"],
+                    "output": resp.response.status
+                }
+                _kwargs.update(nagios_args)
+                print NAGIOS_LINE.format(**_kwargs)
+            else:
+                print "Error"
+                print >> sys.stderr, resp.response.status
         else:
-            if not supress_output:
+            if nagios:
+                _kwargs = {
+                    "time": time.time(),
+                    "code": RETURN_CODE["OK"],
+                    "output": ""
+                }
+                _kwargs.update(nagios_args)
+                print NAGIOS_LINE.format(**_kwargs)
+            elif not suppress_output:
                 if login_time:
                     print "OK %s" % check.login_time
                 else:
@@ -189,6 +214,9 @@ def main():
     parser.add_argument('-e', dest='entity_id')
     parser.add_argument('-t', dest='login_split_time', action='store_true')
     parser.add_argument('-n', dest='count', default="1")
+    parser.add_argument('-N', dest='nagios', action='store_true')
+    parser.add_argument('-S', dest='svc')
+    parser.add_argument('-H', dest='host')
     parser.add_argument(dest="config")
     args = parser.parse_args()
 
@@ -214,13 +242,27 @@ def main():
         entity_id = args.entity_id
         assert client.metadata[entity_id]
 
+    if args.nagios:
+        try:
+            assert args.count == "1"
+            assert args.login_split_time is False
+        except AssertionError:
+            print "you can't combine -N with -n and -t flags"
+            return
+        nagios_args = {"host": args.host, "svc": args.svc}
+    else:
+        nagios_args = {}
+
     if args.count == "1":
-        check(client, conf, entity_id, login_time=args.login_split_time)
+        check(client, conf, entity_id, login_time=args.login_split_time,
+              nagios=args.nagios, nagios_args=nagios_args)
     else:
         for i in range(0, int(args.count)):
-            check(client, conf, entity_id, supress_output=True)
+            check(client, conf, entity_id, suppress_output=True,
+                  nagios_args=nagios_args)
+
 
 if __name__ == "__main__":
-    start = time.time()
+    #start = time.time()
     main()
-    print time.time() - start
+    #print time.time() - start
