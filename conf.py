@@ -62,6 +62,7 @@ CONFIG = {
 
 # The base URL for the IdP
 IDPBASE = "http://localhost:8088"
+MYSELF = "http://localhost:8087/acs/post"
 
 # This part describes when the 'user'/browser should do things.
 INTERACTION = [
@@ -81,7 +82,7 @@ INTERACTION = [
     {
         "matches": {
             "url": "%s/sso/redirect" % IDPBASE,
-            "title": "SAML 2.0 POST"
+            #"title": "SAML 2.0 POST"
         },
         "page-type": "other",
         "control": {
@@ -89,4 +90,14 @@ INTERACTION = [
             "type": "form",
         }
     },
-]
+    {
+        "matches": {
+            "url": MYSELF,
+            "title": "SAML 2.0 POST"
+        },
+        "page-type": "other",
+        "control": {
+            "index": 0,
+            "type": "form",
+        }
+    },]
