@@ -1,8 +1,11 @@
+from saml2 import Error
+from saml2.discovery import DiscoveryServer
+
 __author__ = 'rohe0002'
 
 import json
 
-from urlparse import urlparse
+from urlparse import urlparse, parse_qs
 from bs4 import BeautifulSoup
 
 from mechanize import ParseResponseEx
@@ -366,6 +369,39 @@ class Interaction(object):
             return self.parse
         else:
             return none_func
+
+# ========================================================================
+
+
+class Dresponse(object):
+    def __init__(self):
+        pass
+
+
+class Discovery(object):
+    def __init__(self, args):
+        self.args = args or {}
+
+    def __call__(self, _, conv, location, *args):
+        _cli = conv.client
+        disco = DiscoveryServer(config=_cli.config)
+        dsr = disco.parse_discovery_service_request(location)
+
+        # Use metadata to find the SP endpoint
+        eid = dsr["entityID"][0]
+
+        # verify that the return url is the one register in the metadata
+        if not disco.verify_return(eid, dsr["return"]):
+            raise Error("Discovery request return address not in Metadata")
+
+        return_url = disco.create_discovery_service_response(
+            dsr["return"], dsr["returnIDParam"], self.args["entity_id"])
+
+        resp = Dresponse()
+        resp.headers = {"location": return_url}
+        resp.status_code = 302
+        resp.text = "redirect to SP"
+        return resp
 
 # ========================================================================
 

@@ -13,7 +13,7 @@ from saml2.config import SPConfig
 from saml2.s_utils import rndstr
 from saml2.samlp import STATUS_SUCCESS
 
-from interaction import Interaction
+from interaction import Interaction, Discovery
 from interaction import InteractionNeeded
 from interaction import Action
 
@@ -123,7 +123,10 @@ class Check(object):
                 if page_type == "login":
                     login_start = time.time()
 
-            _op = Action(_spec["control"])
+            if page_type == "discovery":
+                _op = Discovery(_spec["control"])
+            else:
+                _op = Action(_spec["control"])
 
             try:
                 _response = _op(self.client, self, url, _response)
@@ -172,40 +175,43 @@ def check(client, conf, entity_id, suppress_output=False, login_time=False,
         print "Error"
         print >> sys.stderr, err
     else:
-        serv, binding = _client.config.endpoint2service(resp["endpoint"])
-
-        resp = _client.parse_authn_request_response(resp["SAMLResponse"],
-                                                    binding)
-        assert resp.in_response_to == _id
-        try:
-            assert resp.response.status.status_code.value == STATUS_SUCCESS
-        except AssertionError:
-            # Got an error response
-            if nagios:
-                _kwargs = {
-                    "time": time.time(),
-                    "code": RETURN_CODE["CRITICAL"],
-                    "output": resp.response.status
-                }
-                _kwargs.update(nagios_args)
-                print NAGIOS_LINE.format(**_kwargs)
-            else:
-                print "Error"
-                print >> sys.stderr, resp.response.status
+        if resp is None:
+            print "Error"
         else:
-            if nagios:
-                _kwargs = {
-                    "time": time.time(),
-                    "code": RETURN_CODE["OK"],
-                    "output": ""
-                }
-                _kwargs.update(nagios_args)
-                print NAGIOS_LINE.format(**_kwargs)
-            elif not suppress_output:
-                if login_time:
-                    print "OK %s" % check.login_time
+            serv, binding = _client.config.endpoint2service(resp["endpoint"])
+
+            resp = _client.parse_authn_request_response(resp["SAMLResponse"],
+                                                        binding)
+            assert resp.in_response_to == _id
+            try:
+                assert resp.response.status.status_code.value == STATUS_SUCCESS
+            except AssertionError:
+                # Got an error response
+                if nagios:
+                    _kwargs = {
+                        "time": time.time(),
+                        "code": RETURN_CODE["CRITICAL"],
+                        "output": resp.response.status
+                    }
+                    _kwargs.update(nagios_args)
+                    print NAGIOS_LINE.format(**_kwargs)
                 else:
-                    print "OK"
+                    print "Error"
+                    print >> sys.stderr, resp.response.status
+            else:
+                if nagios:
+                    _kwargs = {
+                        "time": time.time(),
+                        "code": RETURN_CODE["OK"],
+                        "output": ""
+                    }
+                    _kwargs.update(nagios_args)
+                    print NAGIOS_LINE.format(**_kwargs)
+                elif not suppress_output:
+                    if login_time:
+                        print "OK %s" % check.login_time
+                    else:
+                        print "OK"
 
 
 def main():
