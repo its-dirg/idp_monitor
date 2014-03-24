@@ -60,6 +60,8 @@ class Check(object):
             while _response.status_code in [302, 301, 303]:
                 url = _response.headers["location"]
                 if url in rdseq:
+                    print >> sys.stderr, "URL: %s" % url
+                    print >> sys.stderr, content
                     raise Exception("Loop detected in redirects")
                 else:
                     rdseq.append(url)
@@ -111,6 +113,8 @@ class Check(object):
             if _spec == _last_action:
                 _same_actions += 1
                 if _same_actions >= 3:
+                    print >> sys.stderr, "URL: %s" % url
+                    print >> sys.stderr, content
                     raise Exception("Interaction loop detection")
             else:
                 _last_action = _spec
@@ -173,7 +177,7 @@ def check(client, conf, entity_id, suppress_output=False, login_time=False,
         resp = check.intermit(resp)
     except Exception, err:
         print "Error"
-        print >> sys.stderr, err
+        print "%s" % err
     else:
         if resp is None:
             print "Error"
