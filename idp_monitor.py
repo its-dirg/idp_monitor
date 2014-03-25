@@ -140,8 +140,11 @@ class Check(object):
                     self.login_time = time.time() - login_start
 
                 if isinstance(_response, dict):
+                    logger.debug("response: %s" % (_response))
                     return _response
+
                 content = _response.text
+                logger.debug("content: %s" % content)
 
                 if _response.status_code >= 400:
                     txt = "Got status code '%s', error: %s" % (
