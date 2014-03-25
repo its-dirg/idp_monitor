@@ -9,13 +9,15 @@ import time
 from urlparse import parse_qs
 
 from saml2.client import Saml2Client
-from saml2.config import SPConfig
+from saml2.config import SPConfig, logging
 from saml2.s_utils import rndstr
 from saml2.samlp import STATUS_SUCCESS
 
 from interaction import Interaction, Discovery
 from interaction import InteractionNeeded
 from interaction import Action
+
+logger = logging.getLogger("saml2.idp_monitor")
 
 __author__ = 'roland'
 

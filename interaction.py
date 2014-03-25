@@ -1,3 +1,4 @@
+import logging
 from saml2 import Error
 from saml2.discovery import DiscoveryServer
 
@@ -5,13 +6,15 @@ __author__ = 'rohe0002'
 
 import json
 
-from urlparse import urlparse, parse_qs
+from urlparse import urlparse
 from bs4 import BeautifulSoup
 
 from mechanize import ParseResponseEx
 from mechanize._form import ControlNotFoundError
 from mechanize._form import AmbiguityError
 from mechanize._form import ListControl
+
+logger = logging.getLogger("saml2.interaction")
 
 NO_CTRL = "No submit control with the name='%s' and value='%s' could be found"
 
@@ -385,18 +388,23 @@ class Discovery(object):
     def __call__(self, _, conv, location, *args):
         _cli = conv.client
         disco = DiscoveryServer(config=_cli.config)
+        logger.debug("Parsing discovery service request")
         dsr = disco.parse_discovery_service_request(location)
+        logger.debug("=> %s" % (dsr,))
 
         # Use metadata to find the SP endpoint
         eid = dsr["entityID"][0]
 
         # verify that the return url is the one register in the metadata
         if not disco.verify_return(eid, dsr["return"]):
+            logger.debug("Discovery request return address not in Metadata")
             raise Error("Discovery request return address not in Metadata")
 
+        logger.debug("Creating discovery service response")
         return_url = disco.create_discovery_service_response(
             dsr["return"], dsr["returnIDParam"], self.args["entity_id"])
 
+        logger.debug("=> %s" % return_url)
         resp = Dresponse()
         resp.headers = {"location": return_url}
         resp.status_code = 302
