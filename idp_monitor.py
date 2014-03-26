@@ -13,7 +13,7 @@ from saml2.config import SPConfig, logging
 from saml2.s_utils import rndstr
 from saml2.samlp import STATUS_SUCCESS
 
-from interaction import Interaction, Discovery
+from interaction import Interaction, Discovery, JSRedirect
 from interaction import InteractionNeeded
 from interaction import Action
 
@@ -131,6 +131,8 @@ class Check(object):
 
             if page_type == "discovery":
                 _op = Discovery(_spec["control"])
+            elif page_type == "js_redirect":
+                _op = JSRedirect(_spec["control"])
             else:
                 _op = Action(_spec["control"])
 
@@ -140,7 +142,7 @@ class Check(object):
                     self.login_time = time.time() - login_start
 
                 if isinstance(_response, dict):
-                    logger.debug("response: %s" % (_response))
+                    logger.debug("response: %s" % (_response,))
                     return _response
 
                 content = _response.text
@@ -152,7 +154,8 @@ class Check(object):
                     raise Exception(txt)
             except InteractionNeeded:
                 raise
-            except Exception:
+            except Exception, err:
+                logger.error("%s" % err)
                 raise
 
 
@@ -180,6 +183,7 @@ def check(client, conf, entity_id, suppress_output=False, login_time=False,
     # resp should be dictionary with keys RelayState, SAMLResponse and endpoint
     try:
         resp = check.intermit(resp)
+        logger.error(resp.text)
     except Exception, err:
         print "Error"
         print "%s" % err

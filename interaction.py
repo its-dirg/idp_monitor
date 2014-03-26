@@ -1,4 +1,6 @@
 import logging
+import re
+import urllib
 from saml2 import Error
 from saml2.discovery import DiscoveryServer
 
@@ -440,3 +442,27 @@ class Action(object):
         result = function(response, **_args)
         self.post_op(result, conv, _args)
         return result
+
+
+class JSRedirect(object):
+    def __init__(self, args):
+        self.args = args or {}
+
+    def __call__(self, _, _a, _b, response):
+        # Use regular expression to find the elem
+        # document.getElementById("redirlink").focus();
+        m1 = re.search("document.getElementById\(\"(.*)\"\).focus\(\);",
+                       response)
+        tag = m1.group(1)
+        m2 = re.search("<a id=\"%s\" href=\"([^>]*)\">" % tag, response)
+        link = m2.group(1)
+        link = urllib.unquote(link)
+        link = link.replace("&amp;", "&")
+        if link.endswith("&"):
+            link = link[:-1]
+
+        resp = Dresponse()
+        resp.headers = {"location": link}
+        resp.status_code = 302
+        resp.text = "redirect to SP"
+        return resp
