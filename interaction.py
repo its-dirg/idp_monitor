@@ -452,9 +452,12 @@ class JSRedirect(object):
         # Use regular expression to find the elem
         # document.getElementById("redirlink").focus();
         m1 = re.search("document.getElementById\(\"(.*)\"\).focus\(\);",
-                       response)
+                       response.text)
+        if m1 is None:
+            raise Error("Not JS redirect")
+
         tag = m1.group(1)
-        m2 = re.search("<a id=\"%s\" href=\"([^>]*)\">" % tag, response)
+        m2 = re.search("<a id=\"%s\" href=\"([^>]*)\">" % tag, response.text)
         link = m2.group(1)
         link = urllib.unquote(link)
         link = link.replace("&amp;", "&")

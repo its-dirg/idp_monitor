@@ -187,6 +187,7 @@ def check(client, conf, entity_id, suppress_output=False, login_time=False,
     except Exception, err:
         print "Error"
         print "%s" % err
+        raise
     else:
         if resp is None:
             print "Error"
@@ -271,14 +272,18 @@ def main():
             assert args.login_split_time is False
         except AssertionError:
             print "you can't combine -N with -n and -t flags"
-            return
+            sys.exit(1)
         nagios_args = {"host": args.host, "svc": args.svc}
     else:
         nagios_args = {}
 
     if args.count == "1":
-        check(client, conf, entity_id, login_time=args.login_split_time,
-              nagios=args.nagios, nagios_args=nagios_args)
+        try:
+            check(client, conf, entity_id, login_time=args.login_split_time,
+                  nagios=args.nagios, nagios_args=nagios_args)
+        except Exception:
+            print "CRITICAL"
+            sys.exit(1)
     else:
         for i in range(0, int(args.count)):
             check(client, conf, entity_id, suppress_output=True,
