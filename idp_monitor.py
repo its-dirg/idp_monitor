@@ -179,14 +179,13 @@ def check(client, conf, entity_id, suppress_output=False, login_time=False,
     if resp.status_code >= 400:
         print "Error"
         print >> sys.stderr, resp.text
+        return
 
     # resp should be dictionary with keys RelayState, SAMLResponse and endpoint
     try:
         resp = check.intermit(resp)
-        logger.error(resp.text)
     except Exception, err:
-        print "Error"
-        print "%s" % err
+        print "ERROR: %s" % err
         raise
     else:
         if resp is None:
@@ -212,6 +211,7 @@ def check(client, conf, entity_id, suppress_output=False, login_time=False,
                 else:
                     print "Error"
                     print >> sys.stderr, resp.response.status
+                raise
             else:
                 if nagios:
                     _kwargs = {
