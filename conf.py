@@ -42,22 +42,16 @@ CONFIG = {
     "xmlsec_binary": XMLSEC_BINARY,
     "accepted_time_diff": 60,
     "metadata": {"local": ["./idp.xml"]},
-    # "organization": {
-    #     "name": ("Ume Universitet", "se"),
-    #     "display_name": ("Ume Universitet", "se"),
-    #     "url": "http://www.its.umu.se",
-    # },
-    # "contact_person": [
-    #     {
-    #         "given_name": "Roland",
-    #         "sur_name": "Hedberg",
-    #         "telephone_number": "+46 70 696 6844",
-    #         "email_address": ["roland.hedberg@umu.se"],
-    #         "contact_type": "technical"
-    #     },
-    # ],
     "secret": "0123456789",
     "only_use_keys_in_metadata": False,
+    "logger": {
+        "rotating": {
+            "filename": "idp_monitor.log",
+            "maxBytes": 500000,
+            "backupCount": 5,
+        },
+        "loglevel": "debug",
+    }
 }
 
 # The base URL for the IdP
