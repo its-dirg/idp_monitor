@@ -64,8 +64,6 @@ class Check(object):
             while _response.status_code in [302, 301, 303]:
                 url = _response.headers["location"]
                 if url in rdseq:
-                    print >> sys.stderr, "URL: %s" % url
-                    print >> sys.stderr, content
                     raise Exception("Loop detected in redirects")
                 else:
                     rdseq.append(url)
@@ -230,7 +228,8 @@ def check(client, conf, entity_id, suppress_output=False, login_time=False,
         return RETURN_CODE["UNKNOWN"]
     else:
         if resp is None:
-            print "Error"
+            print_status(resp, nagios, "UNKNOWN", nagios_args, "UNKNOWN",
+                         suppress_output, _login_time)
         else:
             serv, binding = _client.config.endpoint2service(resp["endpoint"])
 

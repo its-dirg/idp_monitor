@@ -2,7 +2,6 @@
 __author__ = 'roland'
 
 from saml2 import BINDING_PAOS
-from saml2 import BINDING_SOAP
 from saml2 import BINDING_HTTP_ARTIFACT
 from saml2 import BINDING_HTTP_POST
 from saml2 import BINDING_HTTP_REDIRECT
@@ -41,7 +40,7 @@ CONFIG = {
     "cert_file": "%s/keys/server.crt" % PATH,
     "xmlsec_binary": XMLSEC_BINARY,
     "accepted_time_diff": 60,
-    "metadata": {"local": ["./idp.xml"]},
+    "metadata": {"local": ["./local_idp.xml"]},
     "secret": "0123456789",
     "only_use_keys_in_metadata": False,
     "logger": {
