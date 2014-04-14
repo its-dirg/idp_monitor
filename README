@@ -81,3 +81,42 @@ control
 
 **control** specifies what the script should enter where and which button
 to press.
+
+
+installation
+------------
+
+Install pysaml2:
+$ git clone https://github.com/rohe/pysaml2
+$ cd pysaml2
+$ python setup.py install
+$ cd ..
+
+Install xmlsec1, python-bs4 & python-mechanize
+(On Ubuntu)
+$ apt-get install libxmlsec1 python-bs4 python-mechanize
+
+Fetch idp_monitor from github
+$ git clone https://github.com/its-dirg/idp_monitor
+$ cd idp_monitor
+
+Edit the conf.py
+Set BASE to 'https://<FQDN for tester host>:8087'.
+Set PATH to script location, absolute path.
+Set IDPBASE to the base URL of the IDP, ie. 'https://<FQDN of IDP>:443/idp'.
+Modify the INTERACTION defenition, see above.
+
+Create SP certificates
+$ openssl req -new -sha1 -newkey rsa:2048 -nodes -subj "/CN=<FQDN of tester>/O=<Organisation>/C=<Country descriptor>" -keyout ./keys/server.pem -out ./keys/server.csr
+$ openssl x509 -req -days 365 -in ./keys/server.csr -signkey ./keys/server.pem -out ./keys/server.crt
+
+Create the metadata for the SP part
+$ make_metadata.py conf > sp.xml
+
+Grab the metadata from the IDP(s) and put it in the file 'idp.xml'
+
+Run some tests
+$ ./idp_monitor.py conf
+NOTE: no ".py" at the end of the config file name.
+If you have several entityIDs in the idp.xml file you have to specify which entityID to use.
+$ ./idp_monitor.py -e <entityID> conf
